@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Web Calculator</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <!-- Math.js for robust scientific calculations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            touch-action: manipulation;
+            /* Prevent double-tap zoom on mobile */
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Hide scrollbar for display */
+        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Custom Button Press Animation */
+        
+        .calc-btn {
+            transition: background-color 0.1s ease, transform 0.05s ease;
+        }
+        
+        .calc-btn:active {
+            transform: scale(0.95);
+        }
+        /* Display Text Scaling */
+        
+        #input-display {
+            transition: font-size 0.2s ease;
+        }
+        /* Dynamic Grid Adjustments */
+        
+        .scientific-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+        
+        .basic-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+        /* Aspect ratio trick for perfect circles in grid */
+        
+        .btn-circle {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body class="h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
+
+    <!-- Main App Container -->
+    <div class="w-full h-full max-w-md bg-[#121212] flex flex-col relative shadow-2xl overflow-hidden sm:h-[95vh] sm:rounded-3xl sm:border sm:border-gray-800">
+
+        <!-- Header / Navigation -->
+        <header class="flex justify-between items-center px-6 py-4 text-gray-300 z-10 bg-[#121212]">
+            <h1 class="text-lg font-medium tracking-wide">Web Calculator</h1>
+            <div class="flex gap-4">
+                <button onclick="setMode('basic')" id="nav-basic" class="hover:text-white transition-colors material-symbols-outlined text-orange-400">calculate</button>
+                <button onclick="setMode('scientific')" id="nav-scientific" class="hover:text-white transition-colors material-symbols-outlined">functions</button>
+                <button class="hover:text-white transition-colors material-symbols-outlined">more_vert</button>
+            </div>
+        </header>
+
+        <!-- Calculator Display Area (Visible in Basic & Scientific) -->
+        <div id="calculator-display" class="flex flex-col flex-grow justify-end items-end px-6 pb-4 w-full">
+            <div id="history-display" class="text-gray-400 text-2xl min-h-[32px] overflow-x-auto no-scrollbar w-full text-right mb-2 whitespace-nowrap"></div>
+            <div id="input-display" class="text-6xl font-light overflow-x-auto no-scrollbar w-full text-right whitespace-nowrap tracking-tight">0</div>
+        </div>
+
+        <!-- Keypad Area -->
+        <div id="keypad-area" class="w-full px-4 pb-6 bg-[#121212]">
+
+            <!-- Basic Keypad -->
+            <div id="basic-keypad" class="basic-grid text-2xl">
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('AC')">AC</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('%')">%</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('BACK')"><span class="material-symbols-outlined text-2xl">backspace</span></div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('/')">÷</div>
+
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('7')">7</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('8')">8</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('9')">9</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('*')">×</div>
+
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('4')">4</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('5')">5</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('6')">6</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('-')">-</div>
+
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('1')">1</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('2')">2</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('3')">3</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('+')">+</div>
+
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('00')">00</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('0')">0</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('.')">.</div>
+                <div class="btn-circle calc-btn bg-[#f29c38] text-white hover:bg-[#d6852a]" onclick="handleInput('=')">=</div>
+            </div>
+
+            <!-- Scientific Keypad -->
+            <div id="scientific-keypad" class="hidden scientific-grid text-[1.1rem]">
+                <!-- Row 1 -->
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('sin')">sin</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('cos')">cos</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('tan')">tan</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-400 hover:bg-[#3d3d3f]" id="btn-rad" onclick="toggleAngle('rad')">rad</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-orange-400 hover:bg-[#3d3d3f]" id="btn-deg" onclick="toggleAngle('deg')">deg</div>
+
+                <!-- Row 2 -->
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('log')">log</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('ln')">ln</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('(')">(</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput(')')">)</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" id="btn-inv" onclick="toggleInv()">inv</div>
+
+                <!-- Row 3 -->
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('!')">!</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('AC')">AC</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('%')">%</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('BACK')"><span class="material-symbols-outlined">backspace</span></div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('/')">÷</div>
+
+                <!-- Row 4 -->
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('^')">^</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('7')">7</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('8')">8</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('9')">9</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('*')">×</div>
+
+                <!-- Row 5 -->
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('sqrt')">√</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('4')">4</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('5')">5</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('6')">6</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('-')">-</div>
+
+                <!-- Row 6 -->
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('pi')">π</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('1')">1</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('2')">2</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('3')">3</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('+')">+</div>
+
+                <!-- Row 7 -->
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('e')">e</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('00')">00</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('0')">0</div>
+                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('.')">.</div>
+                <div class="btn-circle calc-btn bg-[#f29c38] text-white hover:bg-[#d6852a]" onclick="handleInput('=')">=</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State Variables
+        let currentInput = '0';
+        let expressionStr = '';
+        let isEvaluated = false;
+        let angleMode = 'deg'; // 'deg' or 'rad'
+        let isInv = false;
+
+        // DOM Elements
+        const inputDisplay = document.getElementById('input-display');
+        const historyDisplay = document.getElementById('history-display');
+
+        const basicKeypad = document.getElementById('basic-keypad');
+        const scientificKeypad = document.getElementById('scientific-keypad');
+
+        const calcDisplay = document.getElementById('calculator-display');
+
+        const navBasic = document.getElementById('nav-basic');
+        const navScientific = document.getElementById('nav-scientific');
+
+        // Initialize display size adjustment
+        function adjustDisplaySize() {
+            if (currentInput.length > 12) {
+                inputDisplay.classList.remove('text-6xl');
+                inputDisplay.classList.add('text-4xl');
+            } else if (currentInput.length > 8) {
+                inputDisplay.classList.remove('text-6xl');
+                inputDisplay.classList.add('text-5xl');
+            } else {
+                inputDisplay.classList.remove('text-4xl', 'text-5xl');
+                inputDisplay.classList.add('text-6xl');
+            }
+
+            // Auto scroll to right
+            inputDisplay.scrollLeft = inputDisplay.scrollWidth;
+        }
+
+        // Format number strings for display (add commas)
+        function formatDisplayString(str) {
+            // Very simple formatter, preserves operators and formats numbers
+            // Since it might contain functions like sin(, we only format raw numbers if possible, 
+            // but for simplicity in a math string, we just display the raw string replacing specific symbols.
+            let formatted = str
+                .replace(/\*/g, '×')
+                .replace(/\//g, '÷')
+                .replace(/pi/g, 'π');
+            return formatted;
+        }
+
+        function updateDisplay() {
+            inputDisplay.innerText = formatDisplayString(currentInput);
+            historyDisplay.innerText = formatDisplayString(expressionStr);
+            adjustDisplaySize();
+        }
+
+        // Handle button inputs
+        function handleInput(val) {
+            if (val === 'AC') {
+                currentInput = '0';
+                expressionStr = '';
+                isEvaluated = false;
+            } else if (val === 'BACK') {
+                if (isEvaluated) {
+                    expressionStr = '';
+                    isEvaluated = false;
+                }
+                if (currentInput.length > 1) {
+                    // Check for function names like 'sin(' to delete whole block
+                    if (currentInput.endsWith('sin(') || currentInput.endsWith('cos(') || currentInput.endsWith('tan(') || currentInput.endsWith('log(')) {
+                        currentInput = currentInput.slice(0, -4);
+                    } else if (currentInput.endsWith('ln(')) {
+                        currentInput = currentInput.slice(0, -3);
+                    } else {
+                        currentInput = currentInput.slice(0, -1);
+                    }
+                    if (currentInput === '') currentInput = '0';
+                } else {
+                    currentInput = '0';
+                }
+            } else if (val === '=') {
+                calculateResult();
+            } else {
+                // Handling continuous calculations or resets
+                if (isEvaluated) {
+                    if (['+', '-', '*', '/', '^', '%'].includes(val)) {
+                        expressionStr = currentInput;
+                    } else {
+                        currentInput = '';
+                        expressionStr = '';
+                    }
+                    isEvaluated = false;
+                }
+
+                if (currentInput === '0' && val !== '.' && !['+', '-', '*', '/', '^', '%'].includes(val)) {
+                    currentInput = '';
+                }
+
+                // Map UI keys to Math.js expressions or strings
+                if (['sin', 'cos', 'tan', 'log', 'ln'].includes(val)) {
+                    // Handle Inv toggle mapping
+                    if (isInv) {
+                        if (val === 'sin') val = 'asin';
+                        if (val === 'cos') val = 'acos';
+                        if (val === 'tan') val = 'atan';
+                        if (val === 'ln') val = 'exp';
+                        if (val === 'log') val = '10^'; // Rough approx for display
+                    }
+                    currentInput += val + '(';
+                } else if (val === 'sqrt') {
+                    currentInput += 'sqrt(';
+                } else {
+                    currentInput += val;
+                }
+            }
+            updateDisplay();
+        }
+
+        // Calculation logic using Math.js
+        function calculateResult() {
+            try {
+                if (!currentInput || currentInput === '0') return;
+
+                // Pre-process expression for math.js
+                let evalString = currentInput;
+
+                // Handle percentage
+                evalString = evalString.replace(/%/g, '/100');
+
+                // Config math.js for angle modes
+                // math.js uses radians by default. If in deg, we need to convert args.
+                // A clean way using math.js is replacing trig functions when in 'deg' mode
+                if (angleMode === 'deg') {
+                    // Wrap arguments of trig functions
+                    evalString = evalString.replace(/sin\(([^)]+)\)/g, 'sin($1 deg)');
+                    evalString = evalString.replace(/cos\(([^)]+)\)/g, 'cos($1 deg)');
+                    evalString = evalString.replace(/tan\(([^)]+)\)/g, 'tan($1 deg)');
+                }
+
+                const result = math.evaluate(evalString);
+
+                // Format result to prevent excessive decimals
+                let formattedResult = math.format(result, {
+                    precision: 14
+                });
+
+                expressionStr = currentInput + '=';
+                currentInput = String(formattedResult);
+                isEvaluated = true;
+
+            } catch (error) {
+                expressionStr = currentInput + '=';
+                currentInput = 'Error';
+                isEvaluated = true;
+            }
+            updateDisplay();
+        }
+
+        // View Toggling logic
+        function setMode(mode) {
+            // Reset active nav colors
+            [navBasic, navScientific].forEach(el => {
+                el.classList.remove('text-orange-400');
+                el.classList.add('text-gray-300');
+            });
+
+            // Hide all areas
+            basicKeypad.classList.add('hidden');
+            scientificKeypad.classList.add('hidden');
+
+            calcDisplay.classList.add('hidden');
+
+            if (mode === 'basic') {
+                navBasic.classList.add('text-orange-400');
+                navBasic.classList.remove('text-gray-300');
+                basicKeypad.classList.remove('hidden');
+                calcDisplay.classList.remove('hidden');
+            } else if (mode === 'scientific') {
+                navScientific.classList.add('text-orange-400');
+                navScientific.classList.remove('text-gray-300');
+                scientificKeypad.classList.remove('hidden');
+                calcDisplay.classList.remove('hidden');
+            }
+        }
+
+        // Angle unit toggle logic
+        function toggleAngle(mode) {
+            angleMode = mode;
+            const btnRad = document.getElementById('btn-rad');
+            const btnDeg = document.getElementById('btn-deg');
+
+            if (mode === 'rad') {
+                btnRad.classList.add('text-orange-400');
+                btnRad.classList.remove('text-gray-400');
+                btnDeg.classList.add('text-gray-400');
+                btnDeg.classList.remove('text-orange-400');
+            } else {
+                btnDeg.classList.add('text-orange-400');
+                btnDeg.classList.remove('text-gray-400');
+                btnRad.classList.add('text-gray-400');
+                btnRad.classList.remove('text-orange-400');
+            }
+        }
+
+        // Inverse toggle logic
+        function toggleInv() {
+            isInv = !isInv;
+            const btnInv = document.getElementById('btn-inv');
+            if (isInv) {
+                btnInv.classList.add('text-orange-400');
+                btnInv.classList.remove('text-gray-200');
+                // Could ideally update innerText of sin/cos buttons to asin/acos here
+            } else {
+                btnInv.classList.add('text-gray-200');
+                btnInv.classList.remove('text-orange-400');
+            }
+        }
+
+        // Initial setup
+        updateDisplay();
+    </script>
+</body>
+
+</html>
