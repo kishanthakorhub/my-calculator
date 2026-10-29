@@ -1,408 +1,291 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Web Calculator</title>
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts & Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-
-    <!-- Math.js for robust scientific calculations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
-
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#1e1e1e',
+                        darker: '#121212',
+                        btnGray: '#303134',
+                        btnLightGray: '#5f6368',
+                        btnOrange: '#f29900',
+                        lightBg: '#f8f9fa',
+                        lightBtn: '#e8eaed',
+                        lightBtnGray: '#dadce0',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            touch-action: manipulation;
-            /* Prevent double-tap zoom on mobile */
-            -webkit-tap-highlight-color: transparent;
-        }
-        /* Hide scrollbar for display */
+        /* Mobile ma select na thay tena mate */
+        * { user-select: none; -webkit-tap-highlight-color: transparent; }
         
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        /* Custom Button Press Animation */
-        
-        .calc-btn {
-            transition: background-color 0.1s ease, transform 0.05s ease;
-        }
-        
-        .calc-btn:active {
-            transform: scale(0.95);
-        }
-        /* Display Text Scaling */
-        
-        #input-display {
-            transition: font-size 0.2s ease;
-        }
-        /* Dynamic Grid Adjustments */
-        
-        .scientific-grid {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 0.5rem;
-        }
-        
-        .basic-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.75rem;
-        }
-        /* Aspect ratio trick for perfect circles in grid */
-        
-        .btn-circle {
-            aspect-ratio: 1 / 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 9999px;
-            cursor: pointer;
-            user-select: none;
-        }
+        .history-scroll::-webkit-scrollbar { width: 4px; }
+        .history-scroll::-webkit-scrollbar-thumb { background: #5f6368; border-radius: 4px; }
     </style>
 </head>
+<body class="bg-lightBg dark:bg-darker text-black dark:text-white h-[100dvh] w-screen overflow-hidden flex justify-center items-center font-sans transition-colors duration-200">
 
-<body class="h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
+    <!-- Main Calculator Container -->
+    <div class="relative w-full max-w-sm h-[100dvh] flex flex-col bg-white dark:bg-dark sm:h-[90vh] sm:rounded-3xl sm:border sm:border-gray-300 dark:sm:border-gray-700 shadow-2xl overflow-hidden">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center p-4">
+            <div class="text-lg tracking-wide text-gray-700 dark:text-gray-300">Web Calculator</div>
+            <div class="flex gap-4 items-center relative">
+                <!-- Theme Toggle Button -->
+                <button id="themeBtn" class="text-gray-600 dark:text-gray-300 text-xl font-bold p-1">
+                    <svg id="themeIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+                
+                <!-- 3 Dot Menu -->
+                <button id="menuBtn" class="text-gray-600 dark:text-gray-300 font-bold p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+                </button>
 
-    <!-- Main App Container -->
-    <div class="w-full h-full max-w-md bg-[#121212] flex flex-col relative shadow-2xl overflow-hidden sm:h-[95vh] sm:rounded-3xl sm:border sm:border-gray-800">
-
-        <!-- Header / Navigation -->
-        <header class="flex justify-between items-center px-6 py-4 text-gray-300 z-10 bg-[#121212]">
-            <h1 class="text-lg font-medium tracking-wide">Web Calculator</h1>
-            <div class="flex gap-4">
-                <button onclick="setMode('basic')" id="nav-basic" class="hover:text-white transition-colors material-symbols-outlined text-orange-400">calculate</button>
-                <button onclick="setMode('scientific')" id="nav-scientific" class="hover:text-white transition-colors material-symbols-outlined">functions</button>
-                <button class="hover:text-white transition-colors material-symbols-outlined">more_vert</button>
+                <!-- Dropdown Menu -->
+                <div id="dropdownMenu" class="hidden absolute top-10 right-0 bg-white dark:bg-btnGray rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 w-36 z-50 overflow-hidden">
+                    <button id="historyMenuBtn" class="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-btnLightGray transition-colors">History</button>
+                </div>
             </div>
-        </header>
-
-        <!-- Calculator Display Area (Visible in Basic & Scientific) -->
-        <div id="calculator-display" class="flex flex-col flex-grow justify-end items-end px-6 pb-4 w-full">
-            <div id="history-display" class="text-gray-400 text-2xl min-h-[32px] overflow-x-auto no-scrollbar w-full text-right mb-2 whitespace-nowrap"></div>
-            <div id="input-display" class="text-6xl font-light overflow-x-auto no-scrollbar w-full text-right whitespace-nowrap tracking-tight">0</div>
         </div>
 
-        <!-- Keypad Area -->
-        <div id="keypad-area" class="w-full px-4 pb-6 bg-[#121212]">
+        <!-- Display Area -->
+        <div class="flex-1 flex flex-col justify-end items-end p-4 pb-2">
+            <div id="previousInput" class="text-gray-500 dark:text-gray-400 text-2xl mb-1 min-h-[32px] break-all text-right"></div>
+            <div id="currentInput" class="text-6xl font-light tracking-tight min-h-[72px] break-all text-right overflow-x-auto w-full">0</div>
+        </div>
 
-            <!-- Basic Keypad -->
-            <div id="basic-keypad" class="basic-grid text-2xl">
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('AC')">AC</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('%')">%</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('BACK')"><span class="material-symbols-outlined text-2xl">backspace</span></div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('/')">÷</div>
+        <!-- Keypad Area (Adjusted for mobile fit) -->
+        <div class="grid grid-cols-4 gap-2 p-3 pb-6 sm:pb-3 flex-[2]">
+            <button class="btn-action bg-lightBtnGray dark:bg-btnLightGray text-black dark:text-white rounded-full text-xl flex items-center justify-center" onclick="clearDisplay()">AC</button>
+            <button class="btn-action bg-lightBtnGray dark:bg-btnLightGray text-black dark:text-white rounded-full text-xl flex items-center justify-center" onclick="appendOperator('%')">%</button>
+            <button class="btn-action bg-lightBtnGray dark:bg-btnLightGray text-black dark:text-white rounded-full text-xl flex items-center justify-center" onclick="deleteLast()">⌫</button>
+            <button class="btn-action bg-lightBtnGray dark:bg-btnLightGray text-black dark:text-white rounded-full text-3xl pb-1 flex items-center justify-center" onclick="appendOperator('/')">÷</button>
 
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('7')">7</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('8')">8</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('9')">9</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('*')">×</div>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('7')">7</button>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('8')">8</button>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('9')">9</button>
+            <button class="btn-action bg-lightBtnGray dark:bg-btnLightGray text-black dark:text-white rounded-full text-3xl pb-1 flex items-center justify-center" onclick="appendOperator('*')">×</button>
 
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('4')">4</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('5')">5</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('6')">6</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('-')">-</div>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('4')">4</button>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('5')">5</button>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('6')">6</button>
+            <button class="btn-action bg-lightBtnGray dark:bg-btnLightGray text-black dark:text-white rounded-full text-4xl pb-1 flex items-center justify-center" onclick="appendOperator('-')">-</button>
 
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('1')">1</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('2')">2</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('3')">3</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('+')">+</div>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('1')">1</button>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('2')">2</button>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('3')">3</button>
+            <button class="btn-action bg-lightBtnGray dark:bg-btnLightGray text-black dark:text-white rounded-full text-3xl pb-1 flex items-center justify-center" onclick="appendOperator('+')">+</button>
 
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('00')">00</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('0')">0</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('.')">.</div>
-                <div class="btn-circle calc-btn bg-[#f29c38] text-white hover:bg-[#d6852a]" onclick="handleInput('=')">=</div>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('00')">00</button>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl flex items-center justify-center" onclick="appendNumber('0')">0</button>
+            <button class="btn-num bg-lightBtn dark:bg-btnGray rounded-full text-2xl font-bold pb-2 flex items-center justify-center" onclick="appendNumber('.')">.</button>
+            <button class="bg-btnOrange text-white rounded-full text-3xl pb-1 flex items-center justify-center" onclick="calculate()">=</button>
+        </div>
+
+        <!-- History Overlay -->
+        <div id="historyOverlay" class="hidden absolute inset-0 bg-white dark:bg-dark z-40 flex-col">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleHistory()" class="p-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    </button>
+                    <span class="text-xl font-medium">History</span>
+                </div>
+                <button onclick="clearHistory()" class="p-1">
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
             </div>
-
-            <!-- Scientific Keypad -->
-            <div id="scientific-keypad" class="hidden scientific-grid text-[1.1rem]">
-                <!-- Row 1 -->
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('sin')">sin</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('cos')">cos</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('tan')">tan</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-400 hover:bg-[#3d3d3f]" id="btn-rad" onclick="toggleAngle('rad')">rad</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-orange-400 hover:bg-[#3d3d3f]" id="btn-deg" onclick="toggleAngle('deg')">deg</div>
-
-                <!-- Row 2 -->
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('log')">log</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('ln')">ln</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('(')">(</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput(')')">)</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" id="btn-inv" onclick="toggleInv()">inv</div>
-
-                <!-- Row 3 -->
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('!')">!</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('AC')">AC</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('%')">%</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('BACK')"><span class="material-symbols-outlined">backspace</span></div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('/')">÷</div>
-
-                <!-- Row 4 -->
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('^')">^</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('7')">7</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('8')">8</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('9')">9</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('*')">×</div>
-
-                <!-- Row 5 -->
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('sqrt')">√</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('4')">4</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('5')">5</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('6')">6</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('-')">-</div>
-
-                <!-- Row 6 -->
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('pi')">π</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('1')">1</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('2')">2</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('3')">3</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('+')">+</div>
-
-                <!-- Row 7 -->
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f]" onclick="handleInput('e')">e</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('00')">00</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('0')">0</div>
-                <div class="btn-circle calc-btn bg-[#2a2a2c] text-gray-200 hover:bg-[#3d3d3f] text-xl" onclick="handleInput('.')">.</div>
-                <div class="btn-circle calc-btn bg-[#f29c38] text-white hover:bg-[#d6852a]" onclick="handleInput('=')">=</div>
+            <div id="historyList" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 history-scroll">
+                <!-- History items will appear here -->
             </div>
         </div>
 
     </div>
 
     <script>
-        // State Variables
         let currentInput = '0';
-        let expressionStr = '';
-        let isEvaluated = false;
-        let angleMode = 'deg'; // 'deg' or 'rad'
-        let isInv = false;
+        let previousInput = '';
+        let operator = '';
+        let isResultDisplayed = false;
+        let history = [];
 
-        // DOM Elements
-        const inputDisplay = document.getElementById('input-display');
-        const historyDisplay = document.getElementById('history-display');
+        const currentDisplay = document.getElementById('currentInput');
+        const previousDisplay = document.getElementById('previousInput');
+        
+        // Menu Toggle
+        document.getElementById('menuBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('dropdownMenu').classList.toggle('hidden');
+        });
 
-        const basicKeypad = document.getElementById('basic-keypad');
-        const scientificKeypad = document.getElementById('scientific-keypad');
+        document.addEventListener('click', () => {
+            document.getElementById('dropdownMenu').classList.add('hidden');
+        });
 
-        const calcDisplay = document.getElementById('calculator-display');
-
-        const navBasic = document.getElementById('nav-basic');
-        const navScientific = document.getElementById('nav-scientific');
-
-        // Initialize display size adjustment
-        function adjustDisplaySize() {
-            if (currentInput.length > 12) {
-                inputDisplay.classList.remove('text-6xl');
-                inputDisplay.classList.add('text-4xl');
-            } else if (currentInput.length > 8) {
-                inputDisplay.classList.remove('text-6xl');
-                inputDisplay.classList.add('text-5xl');
+        // Theme Toggle (Light/Dark)
+        document.getElementById('themeBtn').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('themeIcon');
+            if(document.documentElement.classList.contains('dark')) {
+                // Moon icon
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
             } else {
-                inputDisplay.classList.remove('text-4xl', 'text-5xl');
-                inputDisplay.classList.add('text-6xl');
+                // Sun icon
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
             }
+        });
 
-            // Auto scroll to right
-            inputDisplay.scrollLeft = inputDisplay.scrollWidth;
-        }
+        // History Toggle
+        document.getElementById('historyMenuBtn').addEventListener('click', () => {
+            toggleHistory();
+        });
 
-        // Format number strings for display (add commas)
-        function formatDisplayString(str) {
-            // Very simple formatter, preserves operators and formats numbers
-            // Since it might contain functions like sin(, we only format raw numbers if possible, 
-            // but for simplicity in a math string, we just display the raw string replacing specific symbols.
-            let formatted = str
-                .replace(/\*/g, '×')
-                .replace(/\//g, '÷')
-                .replace(/pi/g, 'π');
-            return formatted;
+        function toggleHistory() {
+            document.getElementById('historyOverlay').classList.toggle('hidden');
+            document.getElementById('historyOverlay').classList.toggle('flex');
+            updateHistoryUI();
         }
 
         function updateDisplay() {
-            inputDisplay.innerText = formatDisplayString(currentInput);
-            historyDisplay.innerText = formatDisplayString(expressionStr);
-            adjustDisplaySize();
+            // Add comma formatting for large numbers
+            currentDisplay.innerText = currentInput.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            previousDisplay.innerText = previousInput + ' ' + operator;
         }
 
-        // Handle button inputs
-        function handleInput(val) {
-            if (val === 'AC') {
+        function appendNumber(num) {
+            if (isResultDisplayed) {
+                currentInput = num;
+                isResultDisplayed = false;
+            } else {
+                if (currentInput === '0' && num !== '.') {
+                    currentInput = num;
+                } else if (num === '.' && currentInput.includes('.')) {
+                    return; // Prevent multiple dots
+                } else {
+                    currentInput += num;
+                }
+            }
+            // Fix overflow size
+            if (currentInput.length > 10) {
+                currentDisplay.style.fontSize = '3rem';
+            } else {
+                currentDisplay.style.fontSize = '3.75rem';
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (currentInput === '') return;
+            if (previousInput !== '' && !isResultDisplayed) {
+                calculate();
+            }
+            operator = op;
+            previousInput = currentInput;
+            currentInput = '';
+            isResultDisplayed = false;
+            updateDisplay();
+        }
+
+        function calculate() {
+            if (currentInput === '' || previousInput === '') return;
+            let result;
+            const prev = parseFloat(previousInput.replace(/,/g, ''));
+            const current = parseFloat(currentInput.replace(/,/g, ''));
+            
+            if (isNaN(prev) || isNaN(current)) return;
+
+            let equation = `${prev} ${operator.replace('*', '×').replace('/', '÷')} ${current}`;
+
+            switch (operator) {
+                case '+': result = prev + current; break;
+                case '-': result = prev - current; break;
+                case '*': result = prev * current; break;
+                case '/': 
+                    if (current === 0) {
+                        currentInput = "Error";
+                        updateDisplay();
+                        return;
+                    }
+                    result = prev / current; 
+                    break;
+                case '%': result = prev % current; break;
+                default: return;
+            }
+
+            // Remove trailing decimal zeroes
+            result = parseFloat(result.toFixed(8)).toString();
+
+            // Save to history
+            history.unshift({ equation: equation, result: result, date: new Date().toLocaleDateString() });
+
+            currentInput = result;
+            operator = '';
+            previousInput = '';
+            isResultDisplayed = true;
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            previousInput = '';
+            operator = '';
+            currentDisplay.style.fontSize = '3.75rem';
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (isResultDisplayed) {
+                clearDisplay();
+                return;
+            }
+            if (currentInput.length === 1) {
                 currentInput = '0';
-                expressionStr = '';
-                isEvaluated = false;
-            } else if (val === 'BACK') {
-                if (isEvaluated) {
-                    expressionStr = '';
-                    isEvaluated = false;
-                }
-                if (currentInput.length > 1) {
-                    // Check for function names like 'sin(' to delete whole block
-                    if (currentInput.endsWith('sin(') || currentInput.endsWith('cos(') || currentInput.endsWith('tan(') || currentInput.endsWith('log(')) {
-                        currentInput = currentInput.slice(0, -4);
-                    } else if (currentInput.endsWith('ln(')) {
-                        currentInput = currentInput.slice(0, -3);
-                    } else {
-                        currentInput = currentInput.slice(0, -1);
-                    }
-                    if (currentInput === '') currentInput = '0';
-                } else {
-                    currentInput = '0';
-                }
-            } else if (val === '=') {
-                calculateResult();
             } else {
-                // Handling continuous calculations or resets
-                if (isEvaluated) {
-                    if (['+', '-', '*', '/', '^', '%'].includes(val)) {
-                        expressionStr = currentInput;
-                    } else {
-                        currentInput = '';
-                        expressionStr = '';
-                    }
-                    isEvaluated = false;
-                }
-
-                if (currentInput === '0' && val !== '.' && !['+', '-', '*', '/', '^', '%'].includes(val)) {
-                    currentInput = '';
-                }
-
-                // Map UI keys to Math.js expressions or strings
-                if (['sin', 'cos', 'tan', 'log', 'ln'].includes(val)) {
-                    // Handle Inv toggle mapping
-                    if (isInv) {
-                        if (val === 'sin') val = 'asin';
-                        if (val === 'cos') val = 'acos';
-                        if (val === 'tan') val = 'atan';
-                        if (val === 'ln') val = 'exp';
-                        if (val === 'log') val = '10^'; // Rough approx for display
-                    }
-                    currentInput += val + '(';
-                } else if (val === 'sqrt') {
-                    currentInput += 'sqrt(';
-                } else {
-                    currentInput += val;
-                }
+                currentInput = currentInput.slice(0, -1);
             }
             updateDisplay();
         }
 
-        // Calculation logic using Math.js
-        function calculateResult() {
-            try {
-                if (!currentInput || currentInput === '0') return;
-
-                // Pre-process expression for math.js
-                let evalString = currentInput;
-
-                // Handle percentage
-                evalString = evalString.replace(/%/g, '/100');
-
-                // Config math.js for angle modes
-                // math.js uses radians by default. If in deg, we need to convert args.
-                // A clean way using math.js is replacing trig functions when in 'deg' mode
-                if (angleMode === 'deg') {
-                    // Wrap arguments of trig functions
-                    evalString = evalString.replace(/sin\(([^)]+)\)/g, 'sin($1 deg)');
-                    evalString = evalString.replace(/cos\(([^)]+)\)/g, 'cos($1 deg)');
-                    evalString = evalString.replace(/tan\(([^)]+)\)/g, 'tan($1 deg)');
-                }
-
-                const result = math.evaluate(evalString);
-
-                // Format result to prevent excessive decimals
-                let formattedResult = math.format(result, {
-                    precision: 14
-                });
-
-                expressionStr = currentInput + '=';
-                currentInput = String(formattedResult);
-                isEvaluated = true;
-
-            } catch (error) {
-                expressionStr = currentInput + '=';
-                currentInput = 'Error';
-                isEvaluated = true;
-            }
-            updateDisplay();
+        function clearHistory() {
+            history = [];
+            updateHistoryUI();
         }
 
-        // View Toggling logic
-        function setMode(mode) {
-            // Reset active nav colors
-            [navBasic, navScientific].forEach(el => {
-                el.classList.remove('text-orange-400');
-                el.classList.add('text-gray-300');
+        function updateHistoryUI() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            if(history.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-500 mt-10">No history yet</div>';
+                return;
+            }
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "bg-gray-50 dark:bg-btnGray rounded-2xl p-4 flex flex-col items-end cursor-pointer";
+                div.innerHTML = `
+                    <div class="text-gray-500 text-sm mb-1">${item.equation}</div>
+                    <div class="text-2xl font-medium text-black dark:text-white">${item.result}</div>
+                    <div class="text-xs text-gray-400 mt-2 self-start">${item.date}</div>
+                `;
+                // Allow clicking history to load result
+                div.onclick = () => {
+                    currentInput = item.result;
+                    isResultDisplayed = true;
+                    toggleHistory();
+                    updateDisplay();
+                };
+                list.appendChild(div);
             });
-
-            // Hide all areas
-            basicKeypad.classList.add('hidden');
-            scientificKeypad.classList.add('hidden');
-
-            calcDisplay.classList.add('hidden');
-
-            if (mode === 'basic') {
-                navBasic.classList.add('text-orange-400');
-                navBasic.classList.remove('text-gray-300');
-                basicKeypad.classList.remove('hidden');
-                calcDisplay.classList.remove('hidden');
-            } else if (mode === 'scientific') {
-                navScientific.classList.add('text-orange-400');
-                navScientific.classList.remove('text-gray-300');
-                scientificKeypad.classList.remove('hidden');
-                calcDisplay.classList.remove('hidden');
-            }
         }
-
-        // Angle unit toggle logic
-        function toggleAngle(mode) {
-            angleMode = mode;
-            const btnRad = document.getElementById('btn-rad');
-            const btnDeg = document.getElementById('btn-deg');
-
-            if (mode === 'rad') {
-                btnRad.classList.add('text-orange-400');
-                btnRad.classList.remove('text-gray-400');
-                btnDeg.classList.add('text-gray-400');
-                btnDeg.classList.remove('text-orange-400');
-            } else {
-                btnDeg.classList.add('text-orange-400');
-                btnDeg.classList.remove('text-gray-400');
-                btnRad.classList.add('text-gray-400');
-                btnRad.classList.remove('text-orange-400');
-            }
-        }
-
-        // Inverse toggle logic
-        function toggleInv() {
-            isInv = !isInv;
-            const btnInv = document.getElementById('btn-inv');
-            if (isInv) {
-                btnInv.classList.add('text-orange-400');
-                btnInv.classList.remove('text-gray-200');
-                // Could ideally update innerText of sin/cos buttons to asin/acos here
-            } else {
-                btnInv.classList.add('text-gray-200');
-                btnInv.classList.remove('text-orange-400');
-            }
-        }
-
-        // Initial setup
-        updateDisplay();
     </script>
 </body>
-
 </html>
